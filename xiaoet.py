@@ -216,7 +216,7 @@ class Xet(object):
             with open(os.path.join(resource_dir, 'metadata')) as f:
                 metadata = json.load(f)
             if metadata['complete']:
-                ff = ffmpy.FFmpeg(inputs={os.path.join(resource_dir, 'video.m3u8'): ['-protocol_whitelist', 'crypto,file,http,https,tcp,tls']}, outputs={os.path.join(self.download_dir, metadata['title'] + '.mp4'): None})
+                ff = ffmpy.FFmpeg(inputs={os.path.join(resource_dir, 'video.m3u8'): ['-protocol_whitelist', 'crypto,file,http,https,tcp,tls']}, outputs={os.path.join(self.download_dir, metadata['title'] + '.mp4'): "-c:v copy -c:a copy"})
                 print(ff.cmd)
                 ff.run()
         return
