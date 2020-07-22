@@ -77,7 +77,7 @@ python3 xiaoet.py <店铺ID> -tc <ResourceID>
 备注：
 1. 执行命令后需要微信扫码登录，session时效性为4小时，更换店铺需要重新扫码登录
 2. 默认下载目录为同级download目录下，下载完成后视频为分段，将自动合成；音频不需要合成。
-3. 店铺为`appxxxx`,专栏ID(ProductID)为`p_xxxx_xxx`,资源ID分为视频与音频分别为`v_xxx_xxx`、`a_xxx_xxx`
+3. 店铺ID为`appxxxx`形式, 专栏ID(ProductID)为`p_xxxx_xxx`形式,资源ID(ResourceID)分为视频与音频, 分别为`v_xxx_xxx`、`a_xxx_xxx`形式，需要特别注意的是，这些`ID`**区分大小写**，因此从`URL`中复制这些信息的时候注意大小写要保留。
 
 ## 三、类似项目
 
