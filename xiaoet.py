@@ -13,6 +13,7 @@ import sys
 from m3u8.model import SegmentList, Segment, find_key
 from bs4 import BeautifulSoup
 
+
 class Xet(object):
     def __init__(self, appid, re_login=False):
         self.appid = appid
@@ -37,10 +38,11 @@ class Xet(object):
             return subprocess.run(['call', filepath], shell=True)
         else:
             return subprocess.run(['open', filepath])
-            
+
     def login(self, re_login=False):
         session = requests.Session()
-        if not re_login and self.configs.get('last_appid') == self.appid and (time.time() - self.configs.get('cookies_time')) < 14400: # 4小时
+        if not re_login and self.configs.get('last_appid') == self.appid and (
+                time.time() - self.configs.get('cookies_time')) < 14400:  # 4小时
             for key, value in self.configs['cookies'].items():
                 session.cookies[key] = value
         else:
@@ -50,7 +52,8 @@ class Xet(object):
                 'Origin': 'https://pc-shop.xiaoe-tech.com',
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
-            html = session.get('https://pc-shop.xiaoe-tech.com/{appid}/login'.format(appid=self.appid), headers=headers).text
+            html = session.get('https://pc-shop.xiaoe-tech.com/{appid}/login'.format(appid=self.appid),
+                               headers=headers).text
             soup = BeautifulSoup(html, 'lxml')
             initdata = json.loads(soup.find(name='input', id='initData')['value'])
             with open('qrcode.png', 'wb') as file:
@@ -59,7 +62,9 @@ class Xet(object):
             # Wait for QRcode to be scanned
             islogin = False
             for _ in range(300):
-                res = json.loads(session.post('https://pc-shop.xiaoe-tech.com/{appid}/checkIfUserHasLogin'.format(appid=self.appid), data={'code': initdata['code']}).text)
+                res = json.loads(
+                    session.post('https://pc-shop.xiaoe-tech.com/{appid}/checkIfUserHasLogin'.format(appid=self.appid),
+                                 data={'code': initdata['code']}).text)
                 if not res['code'] and res['data']['code'] == 1:
                     islogin = True
                     break
@@ -67,7 +72,9 @@ class Xet(object):
                     time.sleep(1)
             if islogin:
                 os.remove('qrcode.png')
-                session.get('https://pc-shop.xiaoe-tech.com/{appid}/pcLogin/0?code={code}'.format(appid=self.appid, code=initdata['code']))
+                session.get('https://pc-shop.xiaoe-tech.com/{appid}/pcLogin/0?code={code}'.format(appid=self.appid,
+                                                                                                  code=initdata[
+                                                                                                      'code']))
                 self.configs['last_appid'] = self.appid
                 self.configs['cookies_time'] = time.time()
                 self.configs['cookies'] = requests.utils.dict_from_cookiejar(session.cookies)
@@ -92,7 +99,8 @@ class Xet(object):
             content = ast.literal_eval(res.content.decode("UTF-8"))
             if not content['code']:
                 for product in content['data']:
-                    print('name: {} price: {} productid: {}'.format(product['title'], int(product['price']) / 100, product['id']))
+                    print('name: {} price: {} productid: {}'.format(product['title'], int(product['price']) / 100,
+                                                                    product['id']))
                 return content['data']
             else:
                 print('status: {} msg: {}'.format(content['code'], content['msg']))
@@ -126,17 +134,18 @@ class Xet(object):
             return type
         else:
             print('Invalid id. None suitable type')
-            exit (1)
+            exit(1)
 
     def get_resource(self, resourceid):
         resourcetype = self.transform_type(resourceid)
         url = 'https://pc-shop.xiaoe-tech.com/{appid}/open/{resourcetype}.detail.get/1.0'.format(appid=self.appid,
-                                                                                  resourcetype=resourcetype)
+                                                                                                 resourcetype=resourcetype)
         body = {
             'data[resource_id]': resourceid
         }
-        self.session.headers.update({'Referer': 'https://pc-shop.xiaoe-tech.com/{appid}/{resourcetype}_details?id={resourceid}'.format(
-            appid=self.appid, resourcetype=resourcetype, resourceid=resourceid)})
+        self.session.headers.update(
+            {'Referer': 'https://pc-shop.xiaoe-tech.com/{appid}/{resourcetype}_details?id={resourceid}'.format(
+                appid=self.appid, resourcetype=resourcetype, resourceid=resourceid)})
         res = self.session.post(url, data=body)
         if res.status_code == 200:
             content = ast.literal_eval(res.content.decode("UTF-8"))
@@ -149,7 +158,7 @@ class Xet(object):
     def get_productid(self, resourceid):
         res = self.get_resource(resourceid)
         if res.get('products'):
-            print (res['products'][0]['product_id'])
+            print(res['products'][0]['product_id'])
         return
 
     def download_video(self, download_dir, resource, nocache=False):
@@ -157,7 +166,8 @@ class Xet(object):
         os.makedirs(resource_dir, exist_ok=True)
 
         url = resource['video_hls'].replace('\\', '')
-        self.session.headers.update({'Referer': 'https://pc-shop.xiaoe-tech.com/{appid}/video_details?id={resourceid}'.format(
+        self.session.headers.update(
+            {'Referer': 'https://pc-shop.xiaoe-tech.com/{appid}/video_details?id={resourceid}'.format(
                 appid=self.appid, resourceid=resource['id'])})
         media = m3u8.loads(self.session.get(url).text)
         url_prefix, segments, changed, complete = url.split('v.f230')[0], SegmentList(), False, True
@@ -194,7 +204,8 @@ class Xet(object):
 
     def download_audio(self, download_dir, resource, nocache=False):
         url = resource['audio_url'].replace('\\', '')
-        audio_file = os.path.join(download_dir, '{title}.{suffix}'.format(title=resource['title'], suffix=os.path.basename(url).split('.')[-1]))
+        audio_file = os.path.join(download_dir, '{title}.{suffix}'.format(title=resource['title'],
+                                                                          suffix=os.path.basename(url).split('.')[-1]))
         if not nocache and os.path.exists(audio_file):
             print('Already Downloaded: {title} {file}'.format(title=resource['title'], file=audio_file))
         else:
@@ -216,7 +227,10 @@ class Xet(object):
             with open(os.path.join(resource_dir, 'metadata')) as f:
                 metadata = json.load(f)
             if metadata['complete']:
-                ff = ffmpy.FFmpeg(inputs={os.path.join(resource_dir, 'video.m3u8'): ['-protocol_whitelist', 'crypto,file,http,https,tcp,tls']}, outputs={os.path.join(self.download_dir, metadata['title'] + '.mp4'): "-c:v copy -c:a copy"})
+                ff = ffmpy.FFmpeg(inputs={os.path.join(resource_dir, 'video.m3u8'): ['-protocol_whitelist',
+                                                                                     'crypto,file,http,https,tcp,tls']},
+                                  outputs={os.path.join(self.download_dir,
+                                                        metadata['title'] + '.mp4'): "-c:v copy -c:a copy"})
                 print(ff.cmd)
                 ff.run()
         return
@@ -241,6 +255,7 @@ class Xet(object):
                 print('Not Found. resourceid: {}'.format(resource['id']))
         return
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='''Download tools for Xiaoe-tech''')
     parser.add_argument("appid", type=str,
@@ -253,6 +268,7 @@ def parse_args():
     parser.add_argument("--nocache", action='store_true', help='''Download without cache''')
     parser.add_argument("--login", action='store_true', help='''Force to re-login''')
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -267,6 +283,7 @@ def main():
         xet.get_productid(args.r2p)
     if args.tc:
         xet.transcode(args.tc)
+
 
 if __name__ == '__main__':
     main()
